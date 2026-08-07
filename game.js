@@ -7,8 +7,8 @@ let playerY = 280;
 // Mảng để lưu trữ các viên đạn và kẻ thù
 let bullets = [];
 let enemies = [
-  {x: 600, y: 300},
-  {x: 200, y: 200}
+  {x: 600, y: 300, hp: 3},
+  {x: 200, y: 200, hp: 3}
 ];
 
 let lastDirection = "right";
@@ -46,22 +46,32 @@ function draw() {
   // Kiểm tra va chạm giữa viên đạn và kẻ thù
   let hitBullets = [];
   let hitEnemies = [];
-
   bullets.forEach(function (bullet) {
-    enemies.forEach(function (enemy) {
+    enemies.forEach(function (enemy)  {   
       if (Math.abs(bullet.x - enemy.x) < 30 && Math.abs(bullet.y - enemy.y) < 30) {
         hitBullets.push(bullet);
-        hitEnemies.push(enemy);
+        // Giảm máu của kẻ thù khi bị trúng đạn
+        enemy.hp -= 1;
+        if (enemy.hp <= 0) {
+          hitEnemies.push(enemy);
+        }
       }
     });
   });
-
+// Loại bỏ các viên đạn và kẻ thù đã bị trúng đạn
   bullets = bullets.filter(function (bullet) {
     return !hitBullets.includes(bullet);
   });
   enemies = enemies.filter(function (enemy) {
     return !hitEnemies.includes(enemy);
   });
+  // Hiển thị thông báo khi người chơi chiến thắng
+  if (enemies.length === 0) {
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
+  }
   // Bắt đầu vòng lặp vẽ tiếp theo
   requestAnimationFrame(draw);
 }   
