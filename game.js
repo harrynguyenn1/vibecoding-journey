@@ -1,14 +1,23 @@
+    // Lấy canvas và context
 const canvas = document.querySelector("#gameCanvas");
 const ctx = canvas.getContext("2d");
     // Vị trí ban đầu của người chơi
 let playerX = 380;
 let playerY = 280;
+// Mảng để lưu trữ các viên đạn và kẻ thù
+let bullets = [];
+let enemies = [
+  {x: 600, y: 300},
+  {x: 200, y: 200}
+];
+
+let lastDirection = "right";
     // Tốc độ di chuyển của người chơi
 const speed = 3; 
     // Hàm vẽ và cập nhật vị trí người chơi
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Cập nhật vị trí dựa vào phím đang được giữ
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Cập nhật vị trí người chơi dựa trên các phím được nhấn
   if (keys.d) playerX += speed;
   if (keys.a) playerX -= speed;
   if (keys.w) playerY -= speed;
@@ -16,9 +25,44 @@ function draw() {
   // Giới hạn vị trí người chơi trong canvas
   playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
   playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
-  // Vẽ người chơi  
+  // Vẽ người chơi
   ctx.fillStyle = "blue";   
   ctx.fillRect(playerX, playerY, 40, 40);
+  // Vẽ viên đạn
+  bullets = bullets.filter(function (bullet) {
+    return bullet.y > 0;
+  });
+  bullets.forEach(function (bullet) {
+    bullet.x += bullet.dx;
+    bullet.y += bullet.dy;
+    ctx.fillStyle = "red";
+    ctx.fillRect(bullet.x, bullet.y, 5, 10);
+  });
+  // Vẽ kẻ thù
+  enemies.forEach(function (enemy) {
+    ctx.fillStyle = "green";
+    ctx.fillRect(enemy.x, enemy.y, 40, 40);
+  });
+  // Kiểm tra va chạm giữa viên đạn và kẻ thù
+  let hitBullets = [];
+  let hitEnemies = [];
+
+  bullets.forEach(function (bullet) {
+    enemies.forEach(function (enemy) {
+      if (Math.abs(bullet.x - enemy.x) < 30 && Math.abs(bullet.y - enemy.y) < 30) {
+        hitBullets.push(bullet);
+        hitEnemies.push(enemy);
+      }
+    });
+  });
+
+  bullets = bullets.filter(function (bullet) {
+    return !hitBullets.includes(bullet);
+  });
+  enemies = enemies.filter(function (enemy) {
+    return !hitEnemies.includes(enemy);
+  });
+  // Bắt đầu vòng lặp vẽ tiếp theo
   requestAnimationFrame(draw);
 }   
     // Đối tượng để lưu trạng thái các phím
@@ -30,10 +74,23 @@ const keys = {
 };
     // Lắng nghe sự kiện nhấn phím     
 document.addEventListener("keydown", function (event) {
-  if (event.key.toLocaleLowerCase() === "d") keys.d = true;
-  if (event.key.toLocaleLowerCase() === "a") keys.a = true;
-  if (event.key.toLocaleLowerCase() === "w") keys.w = true;
-  if (event.key.toLocaleLowerCase() === "s") keys.s = true;
+  if (event.key.toLocaleLowerCase() === "d") {
+    keys.d = true;
+    lastDirection = "right";
+  }
+  if (event.key.toLocaleLowerCase() === "a") {
+    keys.a = true;
+    lastDirection = "left";
+  }
+  if (event.key.toLocaleLowerCase() === "w") {
+    keys.w = true;
+    lastDirection = "up";
+  }
+  if (event.key.toLocaleLowerCase() === "s") {
+    keys.s = true;
+    lastDirection = "down";
+  }
+  let pressedKey = event.key.toLocaleLowerCase(); 
 });
     // Lắng nghe sự kiện thả phím
 document.addEventListener("keyup", function (event) {
@@ -42,5 +99,25 @@ document.addEventListener("keyup", function (event) {
   if (event.key.toLocaleLowerCase() === "w") keys.w = false;
   if (event.key.toLocaleLowerCase() === "s") keys.s = false;
 });
+canvas.addEventListener("click", function () {
+  let dx = 0;
+  let dy = 0;
+
+  if (lastDirection === "right") {
+    dx = 5;
+    dy = 0;
+  } else if (lastDirection === "left") {
+    dx = -5;
+    dy = 0;
+  } else if (lastDirection === "up") {
+    dx = 0;
+    dy = -5;
+  } else if (lastDirection === "down") {
+    dx = 0;
+    dy = 5;
+  }
+
+  bullets.push({ x: playerX + 17.5, y: playerY, dx: dx, dy: dy });
+}); 
     // Bắt đầu vòng lặp vẽ
 draw(); 
