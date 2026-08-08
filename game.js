@@ -4,13 +4,18 @@ const ctx = canvas.getContext("2d");
     // Vị trí ban đầu của người chơi
 let playerX = 380;
 let playerY = 280;
+let playerHP = 10;
+let healItem = {x: 650, y: 500, width: 20, height: 20};
 // Mảng để lưu trữ các viên đạn và kẻ thù
 let bullets = [];
-let enemies = [
-  {x: 600, y: 300, hp: 3},
-  {x: 200, y: 200, hp: 3}
+// Mảng các phòng và kẻ thù trong từng phòng
+let rooms = [
+  [{x:600, y: 300, hp: 3}, {x: 200, y: 200, hp: 3}],
+  [{x: 100, y: 100, hp: 3}, {x: 500, y: 400, hp: 3}]
 ];
-
+let currentRoom = 0;
+let enemies = rooms[currentRoom];
+// Biến để lưu hướng di chuyển cuối cùng của người chơi
 let lastDirection = "right";
     // Tốc độ di chuyển của người chơi
 const speed = 3; 
@@ -43,6 +48,14 @@ function draw() {
     ctx.fillStyle = "green";
     ctx.fillRect(enemy.x, enemy.y, 40, 40);
   });
+  // Vẽ vật phẩm hồi máu
+  ctx.fillStyle = "pink";
+  ctx.fillRect(healItem.x, healItem.y, 20, 20);
+  // Kiểm tra va chạm giữa người chơi và vật phẩm hồi máu
+  if (Math.abs(playerX - healItem.x) < 30 && Math.abs(playerY - healItem.y) < 30) {
+    playerHP = Math.min(playerHP + 1, 10);
+    healItem.x = -100; // Di chuyển vật phẩm ra khỏi màn hình sau khi được nhặt
+  }
   // Kiểm tra va chạm giữa viên đạn và kẻ thù
   let hitBullets = [];
   let hitEnemies = [];
@@ -65,12 +78,22 @@ function draw() {
   enemies = enemies.filter(function (enemy) {
     return !hitEnemies.includes(enemy);
   });
+  // Hiển thị máu của người chơi
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "left";
+  ctx.fillText("HP: " + playerHP, 20, 30);
   // Hiển thị thông báo khi người chơi chiến thắng
   if (enemies.length === 0) {
-    ctx.font = "40px Arial";
-    ctx.fillStyle = "black";
-    ctx.textAlign = "center";
-    ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
+    currentRoom++;
+    if (currentRoom < rooms.length) {
+      enemies = rooms[currentRoom];
+    } else {
+      ctx.font = "40px Arial";
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
+    }
   }
   // Bắt đầu vòng lặp vẽ tiếp theo
   requestAnimationFrame(draw);
