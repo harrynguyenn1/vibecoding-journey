@@ -6,6 +6,11 @@ let playerX = 380;
 let playerY = 280;
 let playerHP = 10;
 let lastTime = 0;
+let DashTime = 0;
+let dashCooldownTimer = 0;
+const dashDuration = 0.2;
+const dashCooldown = 3;
+const dashSpeed = 600;
 let healItem = {x: 650, y: 500, width: 20, height: 20};
 // Mảng để lưu trữ các viên đạn và kẻ thù
 let bullets = [];
@@ -29,10 +34,21 @@ function draw(timestamp) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Cập nhật vị trí người chơi dựa trên các phím được nhấn
+  if (DashTime > 0) {
+    DashTime -= dt;
+    if (lastDirection === "right") playerX += dashSpeed * dt;
+    if (lastDirection === "left") playerX -= dashSpeed * dt;
+    if (lastDirection === "up") playerY -= dashSpeed * dt;
+    if (lastDirection === "down") playerY += dashSpeed * dt;
+  } else {
   if (keys.d) playerX += speed * dt;
   if (keys.a) playerX -= speed * dt;
   if (keys.w) playerY -= speed * dt;
   if (keys.s) playerY += speed * dt;
+}
+  if (dashCooldownTimer > 0) {
+    dashCooldownTimer -= dt;
+}
   // Giới hạn vị trí người chơi trong canvas
   playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
   playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
@@ -113,6 +129,12 @@ const keys = {
 };
     // Lắng nghe sự kiện nhấn phím     
 document.addEventListener("keydown", function (event) {
+  if (event.key === " ") {
+    if (dashCooldownTimer <= 0) {
+      DashTime = dashDuration;
+      dashCooldownTimer = dashCooldown;
+    }
+  }
   if (event.key.toLocaleLowerCase() === "d") {
     keys.d = true;
     lastDirection = "right";
