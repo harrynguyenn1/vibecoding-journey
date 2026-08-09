@@ -6,7 +6,7 @@ let playerX = 380;
 let playerY = 280;
 let playerHP = 10;
 let lastTime = 0;
-let DashTime = 0;
+let dashTime = 0;
 let dashCooldownTimer = 0;
 const dashDuration = 0.2;
 const dashCooldown = 3;
@@ -16,8 +16,8 @@ let healItem = {x: 650, y: 500, width: 20, height: 20};
 let bullets = [];
 // Mảng các phòng và kẻ thù trong từng phòng
 let rooms = [
-  [{x:600, y: 300, hp: 3}, {x: 200, y: 200, hp: 3}],
-  [{x: 100, y: 100, hp: 3}, {x: 500, y: 400, hp: 3}]
+  [{x:600, y: 300, hp: 3, speed: 60}, {x: 200, y: 200, hp: 3, speed: 60}],
+  [{x: 100, y: 100, hp: 3, speed: 60}, {x: 500, y: 400, hp: 3, speed: 60}]
 ];
 let currentRoom = 0;
 let enemies = rooms[currentRoom];
@@ -31,11 +31,10 @@ function draw(timestamp) {
     lastTime = timestamp;
   let dt = (timestamp - lastTime) / 1000;
   lastTime = timestamp;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Cập nhật vị trí người chơi dựa trên các phím được nhấn
-  if (DashTime > 0) {
-    DashTime -= dt;
+  if (dashTime > 0) {
+    dashTime -= dt;
     if (lastDirection === "right") playerX += dashSpeed * dt;
     if (lastDirection === "left") playerX -= dashSpeed * dt;
     if (lastDirection === "up") playerY -= dashSpeed * dt;
@@ -67,6 +66,10 @@ function draw(timestamp) {
   });
   // Vẽ kẻ thù
   enemies.forEach(function (enemy) {
+    if (enemy.x < playerX) enemy.x += enemy.speed * dt;
+    if (enemy.x > playerX) enemy.x -= enemy.speed * dt;
+    if (enemy.y < playerY) enemy.y += enemy.speed * dt;
+    if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
     ctx.fillStyle = "green";
     ctx.fillRect(enemy.x, enemy.y, 40, 40);
   });
@@ -131,7 +134,7 @@ const keys = {
 document.addEventListener("keydown", function (event) {
   if (event.key === " ") {
     if (dashCooldownTimer <= 0) {
-      DashTime = dashDuration;
+      dashTime = dashDuration;
       dashCooldownTimer = dashCooldown;
     }
   }
@@ -150,8 +153,7 @@ document.addEventListener("keydown", function (event) {
   if (event.key.toLocaleLowerCase() === "s") {
     keys.s = true;
     lastDirection = "down";
-  }
-  let pressedKey = event.key.toLocaleLowerCase(); 
+  } 
 });
     // Lắng nghe sự kiện thả phím
 document.addEventListener("keyup", function (event) {
@@ -181,4 +183,4 @@ canvas.addEventListener("click", function () {
   bullets.push({ x: playerX + 17.5, y: playerY, dx: dx, dy: dy });
 }); 
     // Bắt đầu vòng lặp vẽ
-draw(); 
+requestAnimationFrame(draw); 
