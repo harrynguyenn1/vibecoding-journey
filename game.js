@@ -24,30 +24,35 @@ let enemies = rooms[currentRoom];
 // Biến để lưu hướng di chuyển cuối cùng của người chơi
 let lastDirection = "right";
     // Tốc độ di chuyển của người chơi
-const speed = 180; 
-    // Hàm vẽ và cập nhật vị trí người chơi
-function draw(timestamp) {
-  if (lastTime === 0)
-    lastTime = timestamp;
-  let dt = (timestamp - lastTime) / 1000;
-  lastTime = timestamp;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Cập nhật vị trí người chơi dựa trên các phím được nhấn
+const speed = 180;
+  // Hàm cập nhật vị trí người chơi
+function updatePlayer(dt) {
+       // Cập nhật vị trí người chơi dựa trên các phím được nhấn
   if (dashTime > 0) {
     dashTime -= dt;
     if (lastDirection === "right") playerX += dashSpeed * dt;
     if (lastDirection === "left") playerX -= dashSpeed * dt;
     if (lastDirection === "up") playerY -= dashSpeed * dt;
     if (lastDirection === "down") playerY += dashSpeed * dt;
-  } else {
+  } else { 
   if (keys.d) playerX += speed * dt;
   if (keys.a) playerX -= speed * dt;
   if (keys.w) playerY -= speed * dt;
   if (keys.s) playerY += speed * dt;
 }
+    // Cập nhật thời gian hồi chiêu của dash
   if (dashCooldownTimer > 0) {
     dashCooldownTimer -= dt;
 }
+}
+    // Hàm vẽ và cập nhật vị trí người chơi
+function draw(timestamp) {
+  if (lastTime === 0)
+  lastTime = timestamp;
+  let dt = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updatePlayer(dt);
   // Giới hạn vị trí người chơi trong canvas
   playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
   playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
