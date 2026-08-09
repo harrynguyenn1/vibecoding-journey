@@ -5,6 +5,7 @@ const ctx = canvas.getContext("2d");
 let playerX = 380;
 let playerY = 280;
 let playerHP = 10;
+let lastTime = 0;
 let healItem = {x: 650, y: 500, width: 20, height: 20};
 // Mảng để lưu trữ các viên đạn và kẻ thù
 let bullets = [];
@@ -18,15 +19,20 @@ let enemies = rooms[currentRoom];
 // Biến để lưu hướng di chuyển cuối cùng của người chơi
 let lastDirection = "right";
     // Tốc độ di chuyển của người chơi
-const speed = 3; 
+const speed = 180; 
     // Hàm vẽ và cập nhật vị trí người chơi
-function draw() {
+function draw(timestamp) {
+  if (lastTime === 0)
+    lastTime = timestamp;
+  let dt = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Cập nhật vị trí người chơi dựa trên các phím được nhấn
-  if (keys.d) playerX += speed;
-  if (keys.a) playerX -= speed;
-  if (keys.w) playerY -= speed;
-  if (keys.s) playerY += speed;
+  if (keys.d) playerX += speed * dt;
+  if (keys.a) playerX -= speed * dt;
+  if (keys.w) playerY -= speed * dt;
+  if (keys.s) playerY += speed * dt;
   // Giới hạn vị trí người chơi trong canvas
   playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
   playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
@@ -35,11 +41,11 @@ function draw() {
   ctx.fillRect(playerX, playerY, 40, 40);
   // Vẽ viên đạn
   bullets = bullets.filter(function (bullet) {
-    return bullet.y > 0;
+    return bullet.y > 0 && bullet.y < canvas.height && bullet.x > 0 && bullet.x < canvas.width;
   });
   bullets.forEach(function (bullet) {
-    bullet.x += bullet.dx;
-    bullet.y += bullet.dy;
+    bullet.x += bullet.dx * dt;
+    bullet.y += bullet.dy * dt;
     ctx.fillStyle = "red";
     ctx.fillRect(bullet.x, bullet.y, 5, 10);
   });
@@ -137,17 +143,17 @@ canvas.addEventListener("click", function () {
   let dy = 0;
 
   if (lastDirection === "right") {
-    dx = 5;
+    dx = 300;
     dy = 0;
   } else if (lastDirection === "left") {
-    dx = -5;
+    dx = -300;
     dy = 0;
   } else if (lastDirection === "up") {
     dx = 0;
-    dy = -5;
+    dy = -300;
   } else if (lastDirection === "down") {
     dx = 0;
-    dy = 5;
+    dy = 300;
   }
 
   bullets.push({ x: playerX + 17.5, y: playerY, dx: dx, dy: dy });
