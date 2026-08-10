@@ -20,6 +20,7 @@ let rooms = [
   [{x: 100, y: 100, hp: 3, speed: 60}, {x: 500, y: 400, hp: 3, speed: 60}]
 ];
 let currentRoom = 0;
+let gameWon = false;
 let enemies = rooms[currentRoom];
 // Biến để lưu hướng di chuyển cuối cùng của người chơi
 let lastDirection = "right";
@@ -59,38 +60,8 @@ function updateEnemies(dt) {
     if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
   });
 }
-// Hàm vẽ tất cả các đối tượng trên canvas
-function draw(timestamp) {    
-  if (lastTime === 0)
-  lastTime = timestamp;
-  let dt = (timestamp - lastTime) / 1000;
-  lastTime = timestamp;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  updatePlayer(dt);
-  updateBullets(dt);
-  updateEnemies(dt);
-  // Giới hạn vị trí người chơi trong canvas
-  playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
-  playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
-  // Vẽ người chơi
-  ctx.fillStyle = "blue";   
-  ctx.fillRect(playerX, playerY, 40, 40);
-  // Vẽ viên đạn
-  bullets.forEach(function (bullet) {
-    ctx.fillStyle = "red";
-    ctx.fillRect(bullet.x, bullet.y, 5, 10);
-  });
-  // Vẽ kẻ thù
-  enemies.forEach(function (enemy) {
-    ctx.fillStyle = "green";
-    ctx.fillRect(enemy.x, enemy.y, 40, 40);
-  });
-
-  // Vẽ vật phẩm hồi máu
-  ctx.fillStyle = "pink";
-  ctx.fillRect(healItem.x, healItem.y, 20, 20);
-  // Kiểm tra va chạm giữa người chơi và vật phẩm hồi máu
-  if (Math.abs(playerX - healItem.x) < 30 && Math.abs(playerY - healItem.y) < 30) {
+function checkCollisions() {
+ if (Math.abs(playerX - healItem.x) < 30 && Math.abs(playerY - healItem.y) < 30) {
     playerHP = Math.min(playerHP + 1, 10);
     healItem.x = -100; // Di chuyển vật phẩm ra khỏi màn hình sau khi được nhặt
   }
@@ -116,23 +87,62 @@ function draw(timestamp) {
   enemies = enemies.filter(function (enemy) {
     return !hitEnemies.includes(enemy);
   });
-  // Hiển thị máu của người chơi
-  ctx.font = "20px Arial";
-  ctx.fillStyle = "black";
-  ctx.textAlign = "left";
-  ctx.fillText("HP: " + playerHP, 20, 30);
-  // Hiển thị thông báo khi người chơi chiến thắng
-  if (enemies.length === 0) {
+}
+
+function checkRoomTransition() {
+if (enemies.length === 0) {
     currentRoom++;
     if (currentRoom < rooms.length) {
       enemies = rooms[currentRoom];
     } else {
-      ctx.font = "40px Arial";
-      ctx.fillStyle = "black";
-      ctx.textAlign = "center";
-      ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
+      gameWon = true;
     }
   }
+}
+
+function drawHUD() {
+ ctx.font = "20px Arial";
+ctx.fillStyle = "black";
+ctx.textAlign = "left";
+ctx.fillText("HP: " + playerHP, 20, 30);
+if (gameWon) {
+  ctx.font = "40px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "center";
+  ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
+}}
+// Hàm vẽ tất cả các đối tượng trên canvas
+function draw(timestamp) {    
+  if (lastTime === 0)
+  lastTime = timestamp;
+  let dt = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updatePlayer(dt);
+  updateBullets(dt);
+  updateEnemies(dt);
+  checkCollisions();
+  checkRoomTransition();
+  // Giới hạn vị trí người chơi trong canvas
+  playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
+  playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
+  // Vẽ người chơi
+  ctx.fillStyle = "blue";   
+  ctx.fillRect(playerX, playerY, 40, 40);
+  // Vẽ viên đạn
+  bullets.forEach(function (bullet) {
+    ctx.fillStyle = "red";
+    ctx.fillRect(bullet.x, bullet.y, 5, 10);
+  });
+  // Vẽ kẻ thù
+  enemies.forEach(function (enemy) {
+    ctx.fillStyle = "green";
+    ctx.fillRect(enemy.x, enemy.y, 40, 40);
+  });
+  // Vẽ vật phẩm hồi máu
+  ctx.fillStyle = "pink";
+  ctx.fillRect(healItem.x, healItem.y, 20, 20);
+  drawHUD();
   // Bắt đầu vòng lặp vẽ tiếp theo
   requestAnimationFrame(draw)};   
     // Đối tượng để lưu trạng thái các phím
