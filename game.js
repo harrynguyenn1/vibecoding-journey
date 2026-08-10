@@ -25,9 +25,8 @@ let enemies = rooms[currentRoom];
 let lastDirection = "right";
     // Tốc độ di chuyển của người chơi
 const speed = 180;
-  // Hàm cập nhật vị trí người chơi
+// Hàm cập nhật vị trí người chơi dựa trên các phím được nhấn
 function updatePlayer(dt) {
-       // Cập nhật vị trí người chơi dựa trên các phím được nhấn
   if (dashTime > 0) {
     dashTime -= dt;
     if (lastDirection === "right") playerX += dashSpeed * dt;
@@ -40,19 +39,36 @@ function updatePlayer(dt) {
   if (keys.w) playerY -= speed * dt;
   if (keys.s) playerY += speed * dt;
 }
-    // Cập nhật thời gian hồi chiêu của dash
   if (dashCooldownTimer > 0) {
     dashCooldownTimer -= dt;
 }
 }
-    // Hàm vẽ và cập nhật vị trí người chơi
-function draw(timestamp) {
+function updateBullets(dt) {
+  bullets = bullets.filter(function (bullet) {
+    return bullet.y > 0 && bullet.y < canvas.height && bullet.x > 0 && bullet.x < canvas.width;
+  });
+  bullets.forEach(function (bullet) {
+    bullet.x += bullet.dx * dt;
+    bullet.y += bullet.dy * dt;})
+}
+function updateEnemies(dt) {
+  enemies.forEach(function (enemy) {
+    if (enemy.x < playerX) enemy.x += enemy.speed * dt;
+    if (enemy.x > playerX) enemy.x -= enemy.speed * dt;
+    if (enemy.y < playerY) enemy.y += enemy.speed * dt;
+    if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
+  });
+}
+// Hàm vẽ tất cả các đối tượng trên canvas
+function draw(timestamp) {    
   if (lastTime === 0)
   lastTime = timestamp;
   let dt = (timestamp - lastTime) / 1000;
   lastTime = timestamp;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   updatePlayer(dt);
+  updateBullets(dt);
+  updateEnemies(dt);
   // Giới hạn vị trí người chơi trong canvas
   playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
   playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
@@ -60,24 +76,16 @@ function draw(timestamp) {
   ctx.fillStyle = "blue";   
   ctx.fillRect(playerX, playerY, 40, 40);
   // Vẽ viên đạn
-  bullets = bullets.filter(function (bullet) {
-    return bullet.y > 0 && bullet.y < canvas.height && bullet.x > 0 && bullet.x < canvas.width;
-  });
   bullets.forEach(function (bullet) {
-    bullet.x += bullet.dx * dt;
-    bullet.y += bullet.dy * dt;
     ctx.fillStyle = "red";
     ctx.fillRect(bullet.x, bullet.y, 5, 10);
   });
   // Vẽ kẻ thù
   enemies.forEach(function (enemy) {
-    if (enemy.x < playerX) enemy.x += enemy.speed * dt;
-    if (enemy.x > playerX) enemy.x -= enemy.speed * dt;
-    if (enemy.y < playerY) enemy.y += enemy.speed * dt;
-    if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
     ctx.fillStyle = "green";
     ctx.fillRect(enemy.x, enemy.y, 40, 40);
   });
+
   // Vẽ vật phẩm hồi máu
   ctx.fillStyle = "pink";
   ctx.fillRect(healItem.x, healItem.y, 20, 20);
@@ -126,8 +134,7 @@ function draw(timestamp) {
     }
   }
   // Bắt đầu vòng lặp vẽ tiếp theo
-  requestAnimationFrame(draw);
-}   
+  requestAnimationFrame(draw)};   
     // Đối tượng để lưu trạng thái các phím
 const keys = {
   d: false,
@@ -188,4 +195,4 @@ canvas.addEventListener("click", function () {
   bullets.push({ x: playerX + 17.5, y: playerY, dx: dx, dy: dy });
 }); 
     // Bắt đầu vòng lặp vẽ
-requestAnimationFrame(draw); 
+requestAnimationFrame(draw);
