@@ -20,7 +20,7 @@ let rooms = [
   [{x: 100, y: 100, hp: 3, speed: 60}, {x: 500, y: 400, hp: 3, speed: 60}]
 ];
 let currentRoom = 0;
-let gameWon = false;
+let gameStage = "playing";
 let enemies = rooms[currentRoom];
 // Biến để lưu hướng di chuyển cuối cùng của người chơi
 let lastDirection = "right";
@@ -95,17 +95,17 @@ if (enemies.length === 0) {
     if (currentRoom < rooms.length) {
       enemies = rooms[currentRoom];
     } else {
-      gameWon = true;
+      gameStage = "won";
     }
   }
 }
 
 function drawHUD() {
- ctx.font = "20px Arial";
-ctx.fillStyle = "black";
-ctx.textAlign = "left";
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "left";
 ctx.fillText("HP: " + playerHP, 20, 30);
-if (gameWon) {
+if (gameStage === "won") {
   ctx.font = "40px Arial";
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
@@ -118,6 +118,7 @@ function draw(timestamp) {
   let dt = (timestamp - lastTime) / 1000;
   lastTime = timestamp;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (gameStage === "playing") {
   updatePlayer(dt);
   updateBullets(dt);
   updateEnemies(dt);
@@ -126,6 +127,7 @@ function draw(timestamp) {
   // Giới hạn vị trí người chơi trong canvas
   playerX = Math.max(0, Math.min(canvas.width - 40, playerX));
   playerY = Math.max(0, Math.min(canvas.height - 40, playerY));
+  }
   // Vẽ người chơi
   ctx.fillStyle = "blue";   
   ctx.fillRect(playerX, playerY, 40, 40);
