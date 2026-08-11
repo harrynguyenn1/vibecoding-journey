@@ -77,7 +77,7 @@ function checkCollisions() {
       if (Math.abs(bullet.x - enemy.x) < 30 && Math.abs(bullet.y - enemy.y) < 30) {
         hitBullets.push(bullet); 
         enemy.hp -= 1;  // Giảm HP của kẻ thù khi trúng đạn
-        if (enemy.hp <= 0) {
+       if (enemy.hp <= 0) {
           hitEnemies.push(enemy);
         }
       }
@@ -87,6 +87,9 @@ function checkCollisions() {
  if (Math.abs(enemy.x - playerX) < 30 && Math.abs(enemy.y - playerY) < 30 && invincibleTime <= 0) {
     playerHP -= 1;
     invincibleTime = 1; // Người chơi bất tử trong 1 giây sau khi bị trúng đòn
+  }
+  if (playerHP <= 0) {
+    gameStage = "lose";
   }
   });
 // Loại bỏ các viên đạn và kẻ thù đã bị trúng đạn
@@ -119,7 +122,31 @@ if (gameStage === "won") {
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
   ctx.fillText("You Win!", canvas.width / 2, canvas.height / 2);
-}}
+}
+if (gameStage === "lose") {
+  ctx.font = "40px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "center";
+  ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+}
+}
+function resetGame() {
+  playerX = 380;
+  playerY = 280;
+  playerHP = 10;
+  dashTime = 0;
+  invincibleTime = 0;
+  dashCooldownTimer = 0;
+  bullets = [];
+  currentRoom = 0;
+  gameStage = "playing";
+  lastDirection = "right";
+  rooms = [
+    [{x:600, y: 300, hp: 3, speed: 60}, {x: 200, y: 200, hp: 3, speed: 60}],
+    [{x: 100, y: 100, hp: 3, speed: 60}, {x: 500, y: 400, hp: 3, speed: 60}]
+  ];
+  enemies = rooms[currentRoom];
+}
 // Hàm vẽ tất cả các đối tượng trên canvas
 function draw(timestamp) {    
   if (lastTime === 0)
@@ -187,6 +214,11 @@ document.addEventListener("keydown", function (event) {
     keys.s = true;
     lastDirection = "down";
   } 
+  if (event.key === "Enter") {
+    if (gameStage !== "playing") {
+      resetGame();
+    }
+  }
 });
     // Lắng nghe sự kiện thả phím
 document.addEventListener("keyup", function (event) {
