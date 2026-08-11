@@ -7,6 +7,7 @@ let playerY = 280;
 let playerHP = 10;
 let lastTime = 0;
 let dashTime = 0;
+let invincibleTime = 0;
 let dashCooldownTimer = 0;
 const dashDuration = 0.2;
 const dashCooldown = 3;
@@ -43,6 +44,9 @@ function updatePlayer(dt) {
   if (dashCooldownTimer > 0) {
     dashCooldownTimer -= dt;
 }
+  if (invincibleTime > 0) {
+    invincibleTime -= dt;
+}
 }
 function updateBullets(dt) {
   bullets = bullets.filter(function (bullet) {
@@ -71,14 +75,19 @@ function checkCollisions() {
   bullets.forEach(function (bullet) {
     enemies.forEach(function (enemy)  {   
       if (Math.abs(bullet.x - enemy.x) < 30 && Math.abs(bullet.y - enemy.y) < 30) {
-        hitBullets.push(bullet);
-        // Giảm máu của kẻ thù khi bị trúng đạn
-        enemy.hp -= 1;
+        hitBullets.push(bullet); 
+        enemy.hp -= 1;  // Giảm HP của kẻ thù khi trúng đạn
         if (enemy.hp <= 0) {
           hitEnemies.push(enemy);
         }
       }
     });
+  });
+  enemies.forEach(function (enemy)  {
+ if (Math.abs(enemy.x - playerX) < 30 && Math.abs(enemy.y - playerY) < 30 && invincibleTime <= 0) {
+    playerHP -= 1;
+    invincibleTime = 1; // Người chơi bất tử trong 1 giây sau khi bị trúng đòn
+  }
   });
 // Loại bỏ các viên đạn và kẻ thù đã bị trúng đạn
   bullets = bullets.filter(function (bullet) {
