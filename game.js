@@ -15,6 +15,10 @@ const CONFIG = {
   maxPlayerHP: 10,
   invincibleDuration: 1,
 };
+const ENEMY_TYPES = {
+  fast: { hp: 1, speed: 100 },
+  tank: { hp: 6, speed: 30 }
+};
 // Vị trí ban đầu của người chơi
 let playerX = 380;
 let playerY = 280;
@@ -29,12 +33,12 @@ let bullets = [];
 // Mảng các phòng và kẻ thù trong từng phòng
 let rooms = [
   [
-    { x: 600, y: 300, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
-    { x: 200, y: 200, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
+    { x: 600, y: 300, type: "fast", hp: ENEMY_TYPES.fast.hp , speed: ENEMY_TYPES.fast.speed },
+    { x: 200, y: 200, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
   ],
   [
-    { x: 100, y: 100, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
-    { x: 500, y: 400, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
+    { x: 100, y: 100, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed },
+    { x: 500, y: 400, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
   ],
 ];
 let currentRoom = 0;
@@ -176,12 +180,12 @@ function resetGame() {
   lastDirection = "right";
   rooms = [
     [
-      { x: 600, y: 300, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
-      { x: 200, y: 200, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
+      { x: 600, y: 300, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed },
+      { x: 200, y: 200, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
     ],
     [
-      { x: 100, y: 100, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
-      { x: 500, y: 400, hp: CONFIG.enemyHP, speed: CONFIG.enemySpeed },
+      { x: 100, y: 100, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed },
+      { x: 500, y: 400, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
     ],
   ];
   enemies = rooms[currentRoom];
