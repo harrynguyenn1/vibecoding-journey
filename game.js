@@ -1,4 +1,3 @@
-// Lấy canvas và context
 const canvas = document.querySelector("#gameCanvas");
 const ctx = canvas.getContext("2d");
 const CONFIG = {
@@ -17,9 +16,8 @@ const CONFIG = {
 };
 const ENEMY_TYPES = {
   fast: { hp: 1, speed: 100 },
-  tank: { hp: 6, speed: 30 }
+  tank: { hp: 6, speed: 30 },
 };
-// Vị trí ban đầu của người chơi
 let playerX = 380;
 let playerY = 280;
 let playerHP = 10;
@@ -28,27 +26,51 @@ let dashTime = 0;
 let invincibleTime = 0;
 let dashCooldownTimer = 0;
 let healItem = { x: 650, y: 500, width: 20, height: 20 };
-// Mảng để lưu trữ các viên đạn và kẻ thù
 let bullets = [];
-// Mảng các phòng và kẻ thù trong từng phòng
+let enemyBullets = [];
 let rooms = [
   [
-    { x: 600, y: 300, type: "fast", hp: ENEMY_TYPES.fast.hp , speed: ENEMY_TYPES.fast.speed },
-    { x: 200, y: 200, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
+    {
+      x: 600,
+      y: 300,
+      type: "fast",
+      hp: ENEMY_TYPES.fast.hp,
+      speed: ENEMY_TYPES.fast.speed,
+      shootTimer: 0,
+    },
+    {
+      x: 200,
+      y: 200,
+      type: "tank",
+      hp: ENEMY_TYPES.tank.hp,
+      speed: ENEMY_TYPES.tank.speed,
+      shootTimer: 0,
+    },
   ],
   [
-    { x: 100, y: 100, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed },
-    { x: 500, y: 400, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
+    {
+      x: 100,
+      y: 100,
+      type: "fast",
+      hp: ENEMY_TYPES.fast.hp,
+      speed: ENEMY_TYPES.fast.speed,
+      shootTimer: 0,
+    },
+    {
+      x: 500,
+      y: 400,
+      type: "tank",
+      hp: ENEMY_TYPES.tank.hp,
+      speed: ENEMY_TYPES.tank.speed,
+      shootTimer: 0,
+    },
   ],
 ];
 let currentRoom = 0;
 let gameStage = "playing";
 let enemies = rooms[currentRoom];
-// Biến để lưu hướng di chuyển cuối cùng của người chơi
 let lastDirection = "right";
-// Tốc độ di chuyển của người chơi
 const speed = CONFIG.playerSpeed;
-// Hàm cập nhật vị trí người chơi dựa trên các phím được nhấn
 function updatePlayer(dt) {
   if (dashTime > 0) {
     dashTime -= dt;
@@ -89,6 +111,31 @@ function updateEnemies(dt) {
     if (enemy.x > playerX) enemy.x -= enemy.speed * dt;
     if (enemy.y < playerY) enemy.y += enemy.speed * dt;
     if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
+
+    enemy.shootTimer -= dt;
+    if (enemy.shootTimer <= 0) {
+      let diffX = playerX - enemy.x;
+      let diffY = playerY - enemy.y;
+      let distance = Math.sqrt(diffX * diffX + diffY * diffY);
+      let dx = (diffX / distance) * CONFIG.bulletSpeed;
+      let dy = (diffY / distance) * CONFIG.bulletSpeed;
+      enemyBullets.push({ x: enemy.x, y: enemy.y, dx: dx, dy: dy });
+      enemy.shootTimer = 2;
+    }
+  });
+}
+function updateEnemyBullets(dt) {
+  enemyBullets = enemyBullets.filter(function (bullet) {
+    return (
+      bullet.y > 0 &&
+      bullet.y < canvas.height &&
+      bullet.x > 0 &&
+      bullet.x < canvas.width
+    );
+  });
+  enemyBullets.forEach(function (bullet) {
+    bullet.x += bullet.dx * dt;
+    bullet.y += bullet.dy * dt;
   });
 }
 function checkCollisions() {
@@ -99,9 +146,9 @@ function checkCollisions() {
     playerHP = Math.min(playerHP + 1, CONFIG.maxPlayerHP); // Tăng HP của người chơi khi nhặt vật phẩm
     healItem.x = -100; // Di chuyển vật phẩm ra khỏi màn hình sau khi được nhặt
   }
-  // Kiểm tra va chạm giữa viên đạn và kẻ thù
   let hitBullets = [];
   let hitEnemies = [];
+  let hitEnemyBullets = [];
   bullets.forEach(function (bullet) {
     enemies.forEach(function (enemy) {
       if (
@@ -129,6 +176,17 @@ function checkCollisions() {
       gameStage = "lose";
     }
   });
+  enemyBullets.forEach(function (bullet) {
+    if (
+      Math.abs(bullet.x - playerX) < CONFIG.collisionThreshold &&
+      Math.abs(bullet.y - playerY) < CONFIG.collisionThreshold &&
+      invincibleTime <= 0
+    ) {
+      playerHP -= 1;
+      invincibleTime = CONFIG.invincibleDuration;
+      hitEnemyBullets.push(bullet);
+    }
+  });
   // Loại bỏ các viên đạn và kẻ thù đã bị trúng đạn
   bullets = bullets.filter(function (bullet) {
     return !hitBullets.includes(bullet);
@@ -137,7 +195,6 @@ function checkCollisions() {
     return !hitEnemies.includes(enemy);
   });
 }
-
 function checkRoomTransition() {
   if (enemies.length === 0) {
     currentRoom++;
@@ -148,7 +205,6 @@ function checkRoomTransition() {
     }
   }
 }
-
 function drawHUD() {
   ctx.font = "20px Arial";
   ctx.fillStyle = "black";
@@ -180,17 +236,44 @@ function resetGame() {
   lastDirection = "right";
   rooms = [
     [
-      { x: 600, y: 300, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed },
-      { x: 200, y: 200, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
+      {
+        x: 600,
+        y: 300,
+        type: "fast",
+        hp: ENEMY_TYPES.fast.hp,
+        speed: ENEMY_TYPES.fast.speed,
+        shootTimer: 0,
+      },
+      {
+        x: 200,
+        y: 200,
+        type: "tank",
+        hp: ENEMY_TYPES.tank.hp,
+        speed: ENEMY_TYPES.tank.speed,
+        shootTimer: 0,
+      },
     ],
     [
-      { x: 100, y: 100, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed },
-      { x: 500, y: 400, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed },
+      {
+        x: 100,
+        y: 100,
+        type: "fast",
+        hp: ENEMY_TYPES.fast.hp,
+        speed: ENEMY_TYPES.fast.speed,
+        shootTimer: 0,
+      },
+      {
+        x: 500,
+        y: 400,
+        type: "tank",
+        hp: ENEMY_TYPES.tank.hp,
+        speed: ENEMY_TYPES.tank.speed,
+        shootTimer: 0,
+      },
     ],
   ];
   enemies = rooms[currentRoom];
 }
-// Hàm vẽ tất cả các đối tượng trên canvas
 function draw(timestamp) {
   if (lastTime === 0) lastTime = timestamp;
   let dt = (timestamp - lastTime) / 1000;
@@ -200,6 +283,7 @@ function draw(timestamp) {
     updatePlayer(dt);
     updateBullets(dt);
     updateEnemies(dt);
+    updateEnemyBullets(dt);
     checkCollisions();
     checkRoomTransition();
     // Giới hạn vị trí người chơi trong canvas
@@ -214,6 +298,10 @@ function draw(timestamp) {
     ctx.fillStyle = "red";
     ctx.fillRect(bullet.x, bullet.y, 5, 10);
   });
+  enemyBullets.forEach(function (bullet) {
+    ctx.fillStyle = "orange";
+    ctx.fillRect(bullet.x, bullet.y, 5, 10);
+  });
   // Vẽ kẻ thù
   enemies.forEach(function (enemy) {
     ctx.fillStyle = "green";
@@ -226,14 +314,12 @@ function draw(timestamp) {
   // Bắt đầu vòng lặp vẽ tiếp theo
   requestAnimationFrame(draw);
 }
-// Đối tượng để lưu trạng thái các phím
 const keys = {
   d: false,
   a: false,
   w: false,
   s: false,
 };
-// Lắng nghe sự kiện nhấn phím
 document.addEventListener("keydown", function (event) {
   if (event.key === " ") {
     if (dashCooldownTimer <= 0) {
@@ -263,7 +349,6 @@ document.addEventListener("keydown", function (event) {
     }
   }
 });
-// Lắng nghe sự kiện thả phím
 document.addEventListener("keyup", function (event) {
   if (event.key.toLocaleLowerCase() === "d") keys.d = false;
   if (event.key.toLocaleLowerCase() === "a") keys.a = false;
@@ -290,5 +375,4 @@ canvas.addEventListener("click", function () {
 
   bullets.push({ x: playerX + 17.5, y: playerY, dx: dx, dy: dy });
 });
-// Bắt đầu vòng lặp vẽ
 requestAnimationFrame(draw);
