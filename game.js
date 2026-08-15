@@ -71,6 +71,11 @@ let gameStage = "playing";
 let enemies = rooms[currentRoom];
 let lastDirection = "right";
 const speed = CONFIG.playerSpeed;
+function isColliding(x1,y1,x2,y2){
+    if (Math.abs(x1 - x2) < CONFIG.collisionThreshold && Math.abs(y1 - y2) < CONFIG.collisionThreshold) 
+        {return true;}
+    else {return false};
+} 
 function updatePlayer(dt) {
   if (dashTime > 0) {
     dashTime -= dt;
@@ -138,11 +143,9 @@ function updateEnemyBullets(dt) {
     bullet.y += bullet.dy * dt;
   });
 }
+
 function checkCollisions() {
-  if (
-    Math.abs(playerX - healItem.x) < CONFIG.collisionThreshold &&
-    Math.abs(playerY - healItem.y) < CONFIG.collisionThreshold
-  ) {
+if (isColliding(playerX, playerY, healItem.x, healItem.y)) {
     playerHP = Math.min(playerHP + 1, CONFIG.maxPlayerHP); // Tăng HP của người chơi khi nhặt vật phẩm
     healItem.x = -100; // Di chuyển vật phẩm ra khỏi màn hình sau khi được nhặt
   }
@@ -151,10 +154,7 @@ function checkCollisions() {
   let hitEnemyBullets = [];
   bullets.forEach(function (bullet) {
     enemies.forEach(function (enemy) {
-      if (
-        Math.abs(bullet.x - enemy.x) < CONFIG.collisionThreshold &&
-        Math.abs(bullet.y - enemy.y) < CONFIG.collisionThreshold
-      ) {
+      if (isColliding(bullet.x, bullet.y, enemy.x, enemy.y)) {
         hitBullets.push(bullet);
         enemy.hp -= 1; // Giảm HP của kẻ thù khi trúng đạn
         if (enemy.hp <= 0) {
@@ -164,10 +164,7 @@ function checkCollisions() {
     });
   });
   enemies.forEach(function (enemy) {
-    if (
-      Math.abs(enemy.x - playerX) < CONFIG.collisionThreshold &&
-      Math.abs(enemy.y - playerY) < CONFIG.collisionThreshold &&
-      invincibleTime <= 0
+    if (isColliding(enemy.x, enemy.y, playerX, playerY) && invincibleTime <= 0
     ) {
       playerHP -= 1;
       invincibleTime = CONFIG.invincibleDuration; // Người chơi bất tử trong 1 giây sau khi bị trúng đòn
@@ -178,9 +175,7 @@ function checkCollisions() {
   });
   enemyBullets.forEach(function (bullet) {
     if (
-      Math.abs(bullet.x - playerX) < CONFIG.collisionThreshold &&
-      Math.abs(bullet.y - playerY) < CONFIG.collisionThreshold &&
-      invincibleTime <= 0
+      isColliding(bullet.x, bullet.y, playerX, playerY) && invincibleTime <= 0
     ) {
       playerHP -= 1;
       invincibleTime = CONFIG.invincibleDuration;
@@ -193,6 +188,9 @@ function checkCollisions() {
   });
   enemies = enemies.filter(function (enemy) {
     return !hitEnemies.includes(enemy);
+  });
+  enemyBullets = enemyBullets.filter(function (enemyBullet) {
+    return !hitEnemyBullets.includes(enemyBullet);
   });
 }
 function checkRoomTransition() {
