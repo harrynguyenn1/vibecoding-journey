@@ -75,7 +75,15 @@ function isColliding(x1,y1,x2,y2){
     if (Math.abs(x1 - x2) < CONFIG.collisionThreshold && Math.abs(y1 - y2) < CONFIG.collisionThreshold) 
         {return true;}
     else {return false};
-} 
+}
+function getDirection(fromX, fromY, toX, toY) {
+  let diffX = toX - fromX;
+  let diffY = toY - fromY;
+  let distance = Math.sqrt(diffX * diffX + diffY * diffY);
+  let dx = (diffX / distance) * CONFIG.bulletSpeed;
+  let dy = (diffY / distance) * CONFIG.bulletSpeed;
+  return { dx: dx, dy: dy };
+}
 function updatePlayer(dt) {
   if (dashTime > 0) {
     dashTime -= dt;
@@ -116,15 +124,10 @@ function updateEnemies(dt) {
     if (enemy.x > playerX) enemy.x -= enemy.speed * dt;
     if (enemy.y < playerY) enemy.y += enemy.speed * dt;
     if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
-
     enemy.shootTimer -= dt;
     if (enemy.shootTimer <= 0) {
-      let diffX = playerX - enemy.x;
-      let diffY = playerY - enemy.y;
-      let distance = Math.sqrt(diffX * diffX + diffY * diffY);
-      let dx = (diffX / distance) * CONFIG.bulletSpeed;
-      let dy = (diffY / distance) * CONFIG.bulletSpeed;
-      enemyBullets.push({ x: enemy.x, y: enemy.y, dx: dx, dy: dy });
+      let direction = getDirection(enemy.x, enemy.y, playerX, playerY);
+      enemyBullets.push({ x: enemy.x, y: enemy.y, dx: direction.dx, dy: direction.dy });
       enemy.shootTimer = 2;
     }
   });
@@ -143,7 +146,6 @@ function updateEnemyBullets(dt) {
     bullet.y += bullet.dy * dt;
   });
 }
-
 function checkCollisions() {
 if (isColliding(playerX, playerY, healItem.x, healItem.y)) {
     playerHP = Math.min(playerHP + 1, CONFIG.maxPlayerHP); // Tăng HP của người chơi khi nhặt vật phẩm
@@ -175,8 +177,8 @@ if (isColliding(playerX, playerY, healItem.x, healItem.y)) {
   });
   enemyBullets.forEach(function (bullet) {
     if (
-      isColliding(bullet.x, bullet.y, playerX, playerY) && invincibleTime <= 0
-    ) {
+      isColliding(bullet.x, bullet.y, playerX, playerY) && invincibleTime <= 0) 
+      {
       playerHP -= 1;
       invincibleTime = CONFIG.invincibleDuration;
       hitEnemyBullets.push(bullet);
