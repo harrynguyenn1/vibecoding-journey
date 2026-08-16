@@ -31,47 +31,22 @@ let lastTime = 0;
 let healItem = { x: 650, y: 500, width: 20, height: 20 };
 let bullets = [];
 let enemyBullets = [];
-let rooms = [
-  [
-    {
-      x: 600,
-      y: 300,
-      type: "fast",
-      hp: ENEMY_TYPES.fast.hp,
-      speed: ENEMY_TYPES.fast.speed,
-      shootTimer: 0,
-    },
-    {
-      x: 200,
-      y: 200,
-      type: "tank",
-      hp: ENEMY_TYPES.tank.hp,
-      speed: ENEMY_TYPES.tank.speed,
-      shootTimer: 0,
-    },
-  ],
-  [
-    {
-      x: 100,
-      y: 100,
-      type: "fast",
-      hp: ENEMY_TYPES.fast.hp,
-      speed: ENEMY_TYPES.fast.speed,
-      shootTimer: 0,
-    },
-    {
-      x: 500,
-      y: 400,
-      type: "tank",
-      hp: ENEMY_TYPES.tank.hp,
-      speed: ENEMY_TYPES.tank.speed,
-      shootTimer: 0,
-    },
-  ],
-];
+let rooms = [{
+    name: "Stage1",
+    enemies: [
+    { x: 600, y: 300, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed, shootTimer: 0 },
+    { x: 200, y: 200, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed, shootTimer: 0 },
+  ]
+},
+{
+    name: "Stage2",
+    enemies: [
+    { x: 100, y: 100, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed, shootTimer: 0 },
+    { x: 500, y: 400, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed, shootTimer: 0 },
+  ]}];
 let currentRoom = 0;
 let gameStage = "playing";
-let enemies = rooms[currentRoom];
+let enemies = rooms[currentRoom].enemies;
 const speed = CONFIG.playerSpeed;
 function isColliding(x1,y1,x2,y2){
     if (Math.abs(x1 - x2) < CONFIG.collisionThreshold && Math.abs(y1 - y2) < CONFIG.collisionThreshold) 
@@ -201,7 +176,7 @@ function checkRoomTransition() {
   if (enemies.length === 0) {
     currentRoom++;
     if (currentRoom < rooms.length) {
-      enemies = rooms[currentRoom];
+      enemies = rooms[currentRoom].enemies;
     } else {
       gameStage = "won";
     }
@@ -212,6 +187,8 @@ function drawHUD() {
   ctx.fillStyle = "black";
   ctx.textAlign = "left";
   ctx.fillText("HP: " + player.hp, 20, 30);
+  if (currentRoom < rooms.length){
+  ctx.fillText("ROOM: " + rooms[currentRoom].name,20, 50)};
   if (gameStage === "won") {
     ctx.font = "40px Arial";
     ctx.fillStyle = "black";
@@ -236,45 +213,20 @@ function resetGame() {
   currentRoom = 0;
   gameStage = "playing";
   player.lastDirection = "right";
-  rooms = [
-    [
-      {
-        x: 600,
-        y: 300,
-        type: "fast",
-        hp: ENEMY_TYPES.fast.hp,
-        speed: ENEMY_TYPES.fast.speed,
-        shootTimer: 0,
-      },
-      {
-        x: 200,
-        y: 200,
-        type: "tank",
-        hp: ENEMY_TYPES.tank.hp,
-        speed: ENEMY_TYPES.tank.speed,
-        shootTimer: 0,
-      },
-    ],
-    [
-      {
-        x: 100,
-        y: 100,
-        type: "fast",
-        hp: ENEMY_TYPES.fast.hp,
-        speed: ENEMY_TYPES.fast.speed,
-        shootTimer: 0,
-      },
-      {
-        x: 500,
-        y: 400,
-        type: "tank",
-        hp: ENEMY_TYPES.tank.hp,
-        speed: ENEMY_TYPES.tank.speed,
-        shootTimer: 0,
-      },
-    ],
-  ];
-  enemies = rooms[currentRoom];
+  rooms = [{
+    name: "Stage1",
+    enemies: [
+    { x: 600, y: 300, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed, shootTimer: 0 },
+    { x: 200, y: 200, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed, shootTimer: 0 },
+  ]
+},
+{
+    name: "Stage2",
+    enemies: [
+    { x: 100, y: 100, type: "fast", hp: ENEMY_TYPES.fast.hp, speed: ENEMY_TYPES.fast.speed, shootTimer: 0 },
+    { x: 500, y: 400, type: "tank", hp: ENEMY_TYPES.tank.hp, speed: ENEMY_TYPES.tank.speed, shootTimer: 0 },
+  ]}];
+  enemies = rooms[currentRoom].enemies;
 }
 function draw(timestamp) {
   if (lastTime === 0) lastTime = timestamp;
