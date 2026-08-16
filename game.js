@@ -11,20 +11,23 @@ const CONFIG = {
   bulletSpeed: 300,
   enemySpeed: 60,
   enemyHP: 3,
-  maxPlayerHP: 10,
+  maxplayerhp: 10,
   invincibleDuration: 1,
 };
 const ENEMY_TYPES = {
   fast: { hp: 1, speed: 100 },
   tank: { hp: 6, speed: 30 },
 };
-let playerX = 380;
-let playerY = 280;
-let playerHP = 10;
+let player = {
+   x:  380,
+   y:  280,
+   hp:  10,
+   dashTime: 0,
+   invincibleTime: 0,
+   dashCooldownTimer: 0,
+   lastDirection: "right"
+};
 let lastTime = 0;
-let dashTime = 0;
-let invincibleTime = 0;
-let dashCooldownTimer = 0;
 let healItem = { x: 650, y: 500, width: 20, height: 20 };
 let bullets = [];
 let enemyBullets = [];
@@ -69,7 +72,6 @@ let rooms = [
 let currentRoom = 0;
 let gameStage = "playing";
 let enemies = rooms[currentRoom];
-let lastDirection = "right";
 const speed = CONFIG.playerSpeed;
 function isColliding(x1,y1,x2,y2){
     if (Math.abs(x1 - x2) < CONFIG.collisionThreshold && Math.abs(y1 - y2) < CONFIG.collisionThreshold) 
@@ -85,23 +87,23 @@ function getDirection(fromX, fromY, toX, toY) {
   return { dx: dx, dy: dy };
 }
 function updatePlayer(dt) {
-  if (dashTime > 0) {
-    dashTime -= dt;
-    if (lastDirection === "right") playerX += CONFIG.dashSpeed * dt;
-    if (lastDirection === "left") playerX -= CONFIG.dashSpeed * dt;
-    if (lastDirection === "up") playerY -= CONFIG.dashSpeed * dt;
-    if (lastDirection === "down") playerY += CONFIG.dashSpeed * dt;
+  if (player.dashTime > 0) {
+    player.dashTime -= dt;
+    if (player.lastDirection === "right") player.x += CONFIG.dashSpeed * dt;
+    if (player.lastDirection === "left") player.x -= CONFIG.dashSpeed * dt;
+    if (player.lastDirection === "up") player.y -= CONFIG.dashSpeed * dt;
+    if (player.lastDirection === "down") player.y += CONFIG.dashSpeed * dt;
   } else {
-    if (keys.d) playerX += speed * dt;
-    if (keys.a) playerX -= speed * dt;
-    if (keys.w) playerY -= speed * dt;
-    if (keys.s) playerY += speed * dt;
+    if (keys.d) player.x += speed * dt;
+    if (keys.a) player.x -= speed * dt;
+    if (keys.w) player.y -= speed * dt;
+    if (keys.s) player.y += speed * dt;
   }
-  if (dashCooldownTimer > 0) {
-    dashCooldownTimer -= dt;
+  if (player.dashCooldownTimer > 0) {
+    player.dashCooldownTimer -= dt;
   }
-  if (invincibleTime > 0) {
-    invincibleTime -= dt;
+  if (player.invincibleTime > 0) {
+    player.invincibleTime -= dt;
   }
 }
 function updateBullets(dt) {
@@ -120,13 +122,13 @@ function updateBullets(dt) {
 }
 function updateEnemies(dt) {
   enemies.forEach(function (enemy) {
-    if (enemy.x < playerX) enemy.x += enemy.speed * dt;
-    if (enemy.x > playerX) enemy.x -= enemy.speed * dt;
-    if (enemy.y < playerY) enemy.y += enemy.speed * dt;
-    if (enemy.y > playerY) enemy.y -= enemy.speed * dt;
+    if (enemy.x < player.x) enemy.x += enemy.speed * dt;
+    if (enemy.x > player.x) enemy.x -= enemy.speed * dt;
+    if (enemy.y < player.y) enemy.y += enemy.speed * dt;
+    if (enemy.y > player.y) enemy.y -= enemy.speed * dt;
     enemy.shootTimer -= dt;
     if (enemy.shootTimer <= 0) {
-      let direction = getDirection(enemy.x, enemy.y, playerX, playerY);
+      let direction = getDirection(enemy.x, enemy.y, player.x, player.y);
       enemyBullets.push({ x: enemy.x, y: enemy.y, dx: direction.dx, dy: direction.dy });
       enemy.shootTimer = 2;
     }
@@ -147,8 +149,8 @@ function updateEnemyBullets(dt) {
   });
 }
 function checkCollisions() {
-if (isColliding(playerX, playerY, healItem.x, healItem.y)) {
-    playerHP = Math.min(playerHP + 1, CONFIG.maxPlayerHP); // Tăng HP của người chơi khi nhặt vật phẩm
+if (isColliding(player.x, player.y, healItem.x, healItem.y)) {
+    player.hp = Math.min(player.hp + 1, CONFIG.maxplayerhp); // Tăng HP của người chơi khi nhặt vật phẩm
     healItem.x = -100; // Di chuyển vật phẩm ra khỏi màn hình sau khi được nhặt
   }
   let hitBullets = [];
@@ -166,21 +168,21 @@ if (isColliding(playerX, playerY, healItem.x, healItem.y)) {
     });
   });
   enemies.forEach(function (enemy) {
-    if (isColliding(enemy.x, enemy.y, playerX, playerY) && invincibleTime <= 0
+    if (isColliding(enemy.x, enemy.y, player.x, player.y) && player.invincibleTime <= 0
     ) {
-      playerHP -= 1;
-      invincibleTime = CONFIG.invincibleDuration; // Người chơi bất tử trong 1 giây sau khi bị trúng đòn
+      player.hp -= 1;
+      player.invincibleTime = CONFIG.invincibleDuration; // Người chơi bất tử trong 1 giây sau khi bị trúng đòn
     }
-    if (playerHP <= 0) {
+    if (player.hp <= 0) {
       gameStage = "lose";
     }
   });
   enemyBullets.forEach(function (bullet) {
     if (
-      isColliding(bullet.x, bullet.y, playerX, playerY) && invincibleTime <= 0) 
+      isColliding(bullet.x, bullet.y, player.x, player.y) && player.invincibleTime <= 0) 
       {
-      playerHP -= 1;
-      invincibleTime = CONFIG.invincibleDuration;
+      player.hp -= 1;
+      player.invincibleTime = CONFIG.invincibleDuration;
       hitEnemyBullets.push(bullet);
     }
   });
@@ -209,7 +211,7 @@ function drawHUD() {
   ctx.font = "20px Arial";
   ctx.fillStyle = "black";
   ctx.textAlign = "left";
-  ctx.fillText("HP: " + playerHP, 20, 30);
+  ctx.fillText("HP: " + player.hp, 20, 30);
   if (gameStage === "won") {
     ctx.font = "40px Arial";
     ctx.fillStyle = "black";
@@ -224,16 +226,16 @@ function drawHUD() {
   }
 }
 function resetGame() {
-  playerX = 380;
-  playerY = 280;
-  playerHP = CONFIG.maxPlayerHP;
-  dashTime = 0;
-  invincibleTime = 0;
-  dashCooldownTimer = 0;
+  player.x = 380;
+  player.y = 280;
+  player.hp = CONFIG.maxplayerhp;
+  player.dashTime = 0;
+  player.invincibleTime = 0;
+  player.dashCooldownTimer = 0;
   bullets = [];
   currentRoom = 0;
   gameStage = "playing";
-  lastDirection = "right";
+  player.lastDirection = "right";
   rooms = [
     [
       {
@@ -287,12 +289,12 @@ function draw(timestamp) {
     checkCollisions();
     checkRoomTransition();
     // Giới hạn vị trí người chơi trong canvas
-    playerX = Math.max(0, Math.min(canvas.width - CONFIG.playerSize, playerX));
-    playerY = Math.max(0, Math.min(canvas.height - CONFIG.playerSize, playerY));
+    player.x = Math.max(0, Math.min(canvas.width - CONFIG.playerSize, player.x));
+    player.y = Math.max(0, Math.min(canvas.height - CONFIG.playerSize, player.y));
   }
   // Vẽ người chơi
   ctx.fillStyle = "blue";
-  ctx.fillRect(playerX, playerY, CONFIG.playerSize, CONFIG.playerSize);
+  ctx.fillRect(player.x, player.y, CONFIG.playerSize, CONFIG.playerSize);
   // Vẽ viên đạn
   bullets.forEach(function (bullet) {
     ctx.fillStyle = "red";
@@ -322,26 +324,26 @@ const keys = {
 };
 document.addEventListener("keydown", function (event) {
   if (event.key === " ") {
-    if (dashCooldownTimer <= 0) {
-      dashTime = CONFIG.dashDuration;
-      dashCooldownTimer = CONFIG.dashCooldown;
+    if (player.dashCooldownTimer <= 0) {
+      player.dashTime = CONFIG.dashDuration;
+      player.dashCooldownTimer = CONFIG.dashCooldown;
     }
   }
   if (event.key.toLocaleLowerCase() === "d") {
     keys.d = true;
-    lastDirection = "right";
+    player.lastDirection = "right";
   }
   if (event.key.toLocaleLowerCase() === "a") {
     keys.a = true;
-    lastDirection = "left";
+    player.lastDirection = "left";
   }
   if (event.key.toLocaleLowerCase() === "w") {
     keys.w = true;
-    lastDirection = "up";
+    player.lastDirection = "up";
   }
   if (event.key.toLocaleLowerCase() === "s") {
     keys.s = true;
-    lastDirection = "down";
+    player.lastDirection = "down";
   }
   if (event.key === "Enter") {
     if (gameStage !== "playing") {
@@ -359,20 +361,20 @@ canvas.addEventListener("click", function () {
   let dx = 0;
   let dy = 0;
 
-  if (lastDirection === "right") {
+  if (player.lastDirection === "right") {
     dx = CONFIG.bulletSpeed;
     dy = 0;
-  } else if (lastDirection === "left") {
+  } else if (player.lastDirection === "left") {
     dx = -CONFIG.bulletSpeed;
     dy = 0;
-  } else if (lastDirection === "up") {
+  } else if (player.lastDirection === "up") {
     dx = 0;
     dy = -CONFIG.bulletSpeed;
-  } else if (lastDirection === "down") {
+  } else if (player.lastDirection === "down") {
     dx = 0;
     dy = CONFIG.bulletSpeed;
   }
 
-  bullets.push({ x: playerX + 17.5, y: playerY, dx: dx, dy: dy });
+  bullets.push({ x: player.x + 17.5, y: player.y, dx: dx, dy: dy });
 });
 requestAnimationFrame(draw);
